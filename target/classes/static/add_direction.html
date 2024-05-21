@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Formation</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f2ebe5;
+    }
+    header {
+        background-color: #9a496e;
+        color: #fff;
+        padding: 10px 0;
+        text-align: center;
+    }
+    header h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+    nav {
+        background-color: #dd8ea4;
+        overflow: hidden;
+    }
+    nav a {
+        float: left;
+        display: block;
+        color: #fff;
+        text-align: center;
+        padding: 14px 20px;
+        text-decoration: none;
+    }
+    nav a:hover {
+        background-color: #e2c2e3;
+        color: black;
+    }
+    label{
+        color: #333333;
+    }
+    input{
+        border-radius: 40px;
+        width: 50%;
+        color: #333333;
+        border: 1px solid rgba(255, 0, 0, 0.35);
+        background-color: #fdd9dd;
+    }
+    .container {
+        padding: 20px;
+    }
+    form {
+        background-color: #f2ebe5;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    fieldset {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    legend {
+        font-weight: bold;
+    }
+    label, input, button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    button[type="button"], button[type="submit"] {
+        width: auto;
+        padding: 10px 20px;
+        background-color: #e6ace6;
+        color: black;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button[type="button"]:hover, button[type="submit"]:hover {
+        background-color: #555;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+    .modal-content {
+        background-color: #f2ebe5;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        border-radius: 8px;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover, .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
+
+</head>
+
+<body>
+<header>
+    <h1>Train Formation</h1>
+</header>
+<nav>
+    <a href="/add_direction.html">Home</a>
+    <a href="#" onclick="showReport()">Show Report</a>
+</nav>
+<!-- Updated form to include direction input -->
+<div class="container">
+    <h2>Add Train</h2>
+    <form id="addTrainForm" action="/addTrain" method="post">
+        <label for="directionCount">Direction Count (2-5):</label>
+        <input type="number" id="directionCount" name="directionCount" min="2" max="5" required><br><br>
+
+        <div id="trainDetails"></div>
+
+        <button type="button" onclick="addTrainField()">Add Train</button><br><br>
+        <button type="submit" onclick="submitForm()">Submit</button>
+    </form>
+</div>
+
+<div id="reportModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="reportContent"></div>
+       <!-- <button class="load-data-button" onclick="loadDataFromDatabase()">Load Data from Database</button>-->
+    </div>
+</div>
+<script>
+    // Функція додавання полів для потягу
+    function addTrainField() {
+        const directionCount = document.getElementById('directionCount').value;
+        const trainDetailsDiv = document.getElementById('trainDetails');
+        trainDetailsDiv.innerHTML = '';
+        for (let i = 0; i < directionCount; i++) {
+            const fieldset = document.createElement('fieldset');
+            fieldset.innerHTML = `
+                    <legend>Direction ${i + 1}</legend>
+                    <label for="Direction${i}">Direction:</label>
+                    <input type="text" id="Direction${i}" name="Direction" required><br><br>
+                    <label for="wagonType${i}">Wagon Type:</label>
+                    <input type="text" id="wagonType${i}" name="wagonType" required><br><br>
+                    <label for="wagonCount${i}">Wagon Count:</label>
+                    <input type="number" id="wagonCount${i}" name="wagonCount" min="1" required><br><br>
+                    <div id="wagonNumbers${i}"></div><br>
+                    <label for="time${i}">Time:</label>
+                    <input type="time" id="time${i}" name="time" required><br><br>
+                    <label for="executor${i}">Executor:</label>
+                    <input type="text" id="executor${i}" name="executor" required><br><br>
+                `;
+            fieldset.setAttribute('id', `direction${i}`);
+            trainDetailsDiv.appendChild(fieldset);
+            addWagonFields(i);
+        }
+    }
+
+    // Функція додавання полів для вагонів
+    function addWagonFields(directionIndex) {
+        const wagonCountInput = document.getElementById(`wagonCount${directionIndex}`);
+        wagonCountInput.addEventListener('change', function() {
+            const wagonCount = parseInt(wagonCountInput.value);
+            const wagonNumbersDiv = document.getElementById(`wagonNumbers${directionIndex}`);
+            wagonNumbersDiv.innerHTML = '';
+            for (let j = 0; j < wagonCount; j++) {
+                const input = document.createElement('input');
+                input.setAttribute('type', 'text');
+                input.setAttribute('id', `wagonNumber${directionIndex}_${j}`);
+                input.setAttribute('name', `wagonNumbers`);
+                input.setAttribute('placeholder', `Wagon ${j + 1} Number`);
+                input.setAttribute('required', 'true');
+                wagonNumbersDiv.appendChild(input);
+                wagonNumbersDiv.appendChild(document.createElement('br'));
+            }
+        });
+    }
+
+    // Функція відправки форми на сервер
+    function submitForm() {
+        const formData = new FormData(document.getElementById('addTrainForm'));
+        fetch('/addTrain', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // Оновлення UI або відображення повідомлення про успішну операцію
+                alert("Дані успішно додано!");
+                window.location.reload();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                // Відображення повідомлення про помилку
+                alert("Під час додавання даних виникла помилка!");
+            });
+    }
+
+    // Функція відображення звіту
+    function showReport() {
+        const directionCount = document.getElementById('directionCount').value;
+        let reportContent = "<h2>Train Formation Report</h2>";
+        for (let i = 0; i < directionCount; i++) {
+            reportContent += `<h3>Direction ${i + 1}:</h3>`;
+            reportContent += `<p>Direction: ${document.getElementById(`Direction${i}`).value}</p>`;
+            reportContent += `<p>Wagon Type: ${document.getElementById(`wagonType${i}`).value}</p>`;
+            const wagonCount = parseInt(document.getElementById(`wagonCount${i}`).value);
+            reportContent += "<p>Wagon Numbers: ";
+            for (let j = 0; j < wagonCount; j++) {
+                reportContent += `${document.getElementById(`wagonNumber${i}_${j}`).value}, `;
+            }
+            reportContent = reportContent.slice(0, -2); // Remove the last comma and space
+            reportContent += `</p>`;
+            reportContent += `<p>Time: ${document.getElementById(`time${i}`).value}</p>`;
+            reportContent += `<p>Executor: ${document.getElementById(`executor${i}`).value}</p>`;
+        }
+        document.getElementById('reportContent').innerHTML = reportContent;
+        const modal = document.getElementById('reportModal');
+        modal.style.display = "block";
+    }
+
+    // Функція закриття модального вікна
+    function closeModal() {
+        const modal = document.getElementById('reportModal');
+        modal.style.display = "none";
+    }
+
+    // Закриття модального вікна при кліку поза ним
+    window.onclick = function(event) {
+        const modal = document.getElementById('reportModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // Функція завантаження даних з бази даних
+    // function loadDataFromDatabase() {
+    //     fetch('/getTrainData')
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             let reportContent = "<h2>Train Data from Database</h2>";
+    //             if (data.length === 0) {
+    //                 reportContent += "<p>No data available.</p>";
+    //             } else {
+    //                 data.forEach((train, index) => {
+    //                     reportContent += `<h3>Direction ${index + 1}:</h3>`;
+    //                     reportContent += `<p>Wagon Type: ${train.wagonType}</p>`;
+    //                     reportContent += "<p>Wagon Numbers: ";
+    //                     train.wagonNumbers.forEach(number => {
+    //                         reportContent += `${number}, `;
+    //                     });
+    //                     reportContent = reportContent.slice(0, -2); // Remove the last comma and space
+    //                     reportContent += `</p>`;
+    //                     reportContent += `<p>Time: ${train.time}</p>`;
+    //                     reportContent += `<p>Executor: ${train.executor}</p>`;
+    //                 });
+    //             }
+    //             document.getElementById('reportContent').innerHTML = reportContent;
+    //         })
+    //         .catch(error => {
+    //             console.error('Error:', error);
+    //             document.getElementById('reportContent').innerHTML = "<p>Error loading data.</p>";
+    //         });
+    // }
+</script>
+</body>
+</html>
+
